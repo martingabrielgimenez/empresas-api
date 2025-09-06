@@ -9,7 +9,6 @@ class Empresa extends Model
 {
     use HasFactory;
 
-    // Constantes para evitar "strings mágicos"
     const ESTADO_ACTIVO = 'Activo';
     const ESTADO_INACTIVO = 'Inactivo';
 
@@ -17,7 +16,6 @@ class Empresa extends Model
         'nit', 'nombre', 'direccion', 'telefono', 'estado'
     ];
 
-    // Casts para asegurar tipos
     protected $casts = [
         'nit' => 'string',
         'nombre' => 'string',

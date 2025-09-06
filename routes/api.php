@@ -9,11 +9,10 @@ use App\Http\Controllers\EmpresaController;
 |--------------------------------------------------------------------------
 */
 
-// Ruta extra para eliminar todas las inactivas (va PRIMERO)
 Route::delete('empresas/inactivas', [EmpresaController::class, 'destroyInactivas']);
 
-// CRUD básico sin destroy
+// sin destroy
 Route::apiResource('empresas', EmpresaController::class)->except(['destroy']);
 
-// Borrar empresa por NIT (genérica, va después)
+// Borrar empresa por NIT
 Route::delete('empresas/{nit}', [EmpresaController::class, 'destroy']);

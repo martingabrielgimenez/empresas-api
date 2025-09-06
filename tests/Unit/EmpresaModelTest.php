@@ -13,7 +13,7 @@ class EmpresaModelTest extends TestCase
     /** @test */
     public function puede_filtrar_empresas_inactivas()
     {
-        // Creamos empresas activas e inactivas
+        // Crear empresas activas e inactivas
         Empresa::factory()->create(['estado' => Empresa::ESTADO_ACTIVO]);
         Empresa::factory()->create(['estado' => Empresa::ESTADO_INACTIVO]);
         Empresa::factory()->create(['estado' => Empresa::ESTADO_INACTIVO]);

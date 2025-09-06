@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class EmpresaController extends Controller
 {
-    // GET /api/empresas → lista todas las empresas
+    // GET /api/empresas = lista todas las empresas
     public function index()
     {
         try {
@@ -26,7 +26,7 @@ class EmpresaController extends Controller
         }
     }
 
-    // POST /api/empresas → crea una empresa nueva
+    // POST /api/empresas = crea una empresa nueva
     public function store(Request $request)
     {
         try {
@@ -37,7 +37,7 @@ class EmpresaController extends Controller
                 'telefono' => 'nullable|string|max:20',
             ]);
 
-            // estado = Activo por defecto usando constante
+            // estado = Activo por defecto
             $validated['estado'] = Empresa::ESTADO_ACTIVO;
 
             $empresa = Empresa::create($validated);
@@ -62,7 +62,7 @@ class EmpresaController extends Controller
         }
     }
 
-    // GET /api/empresas/{nit} → consulta empresa por NIT
+    // GET /api/empresas/{nit} = consulta empresa por NIT
     public function show($nit)
     {
         try {
@@ -87,7 +87,7 @@ class EmpresaController extends Controller
         }
     }
 
-    // PUT/PATCH /api/empresas/{nit} → actualiza datos de empresa
+    // PUT/PATCH /api/empresas/{nit} = actualiza datos d e empresa
     public function update(Request $request, $nit)
     {
         try {
@@ -127,7 +127,7 @@ class EmpresaController extends Controller
         }
     }
 
-    // DELETE /api/empresas/{nit} → elimina empresa solo si está inactiva
+    // DELETE /api/empresas/{nit} = elimina empresa solo si está inactiva
     public function destroy($nit)
     {
         try {
@@ -161,11 +161,10 @@ class EmpresaController extends Controller
         }
     }
 
-    // DELETE /api/empresas/inactivas → elimina todas las empresas inactivas
+    // DELETE /api/empresas/inactivas = elimina todas las empresas inactivas
     public function destroyInactivas()
     {
         try {
-            // usamos scope del modelo
             $deleted = Empresa::inactivas()->delete();
 
             return response()->json([

@@ -1,23 +1,25 @@
-# Empresas API - Desafío Técnico AICOLL
+# API Empresas - Laravel 12
 
-API REST desarrollada con **Laravel 10** y **PHP 8** para la gestión de empresas.  
-Permite crear, listar, consultar por NIT, actualizar y eliminar empresas.  
-Además incluye una ruta especial para eliminar todas las empresas inactivas.
+API REST desarrollada en **Laravel 12** para la gestión de empresas.  
+Incluye **CRUD completo**, validaciones, y una funcionalidad para **eliminar en lote todas las empresas inactivas**.  
+El proyecto cuenta con **tests unitarios y de integración**.
 
 ---
 
-## 🚀 Tecnologías usadas
-- PHP 8
+## 🚀 Requisitos
+
+- PHP >= 8.2
+- Composer
+- MySQL
 - Laravel 12
-- MySQL (desarrollo)
-- SQLite en memoria (tests)
-- PHPUnit
+- Extensiones de PHP: `pdo_mysql`
 
 ---
 
-## 📦 Instalación
+## ⚙️ Instalación
+f
+Clonar el repositorio:
 
-1. Clonar el repositorio:
-   ```bash
-   git clone https://github.com/<tu-usuario>/empresas-api.git
-   cd empresas-api
+```bash
+git clone https://github.com/martingabrielgimenez/empresas-api.git
+cd empresas-api
