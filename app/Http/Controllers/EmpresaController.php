@@ -4,180 +4,167 @@ namespace App\Http\Controllers;
 
 use App\Models\Empresa;
 use Illuminate\Http\Request;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Http\JsonResponse;
 
 class EmpresaController extends Controller
 {
-    // GET /api/empresas = lista todas las empresas
-    public function index()
+    // ---------- API (JSON) ----------
+    public function index(): JsonResponse
     {
         try {
             $empresas = Empresa::all();
             return response()->json([
                 'success' => true,
-                'data' => $empresas
+                'data' => $empresas,
             ], 200);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Error al obtener las empresas',
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], 500);
         }
     }
 
-    // POST /api/empresas = crea una empresa nueva
-    public function store(Request $request)
+    public function store(Request $request): JsonResponse
     {
-        try {
-            $validated = $request->validate([
-                'nit' => 'required|string|unique:empresas,nit',
-                'nombre' => 'required|string|max:255',
-                'direccion' => 'nullable|string|max:255',
-                'telefono' => 'nullable|string|max:20',
-            ]);
+        $validated = $request->validate([
+            'nit'       => 'required|unique:empresas,nit',
+            'nombre'    => 'required',
+            'direccion' => 'nullable',
+            'telefono'  => 'nullable',
+            'estado'    => 'in:Activo,Inactivo',
+        ]);
 
-            // estado = Activo por defecto
-            $validated['estado'] = Empresa::ESTADO_ACTIVO;
+    // Valor por defecto si no viene
+        if (!isset($validated['estado'])) {
+            $validated['estado'] = 'Activo';
+        }
 
-            $empresa = Empresa::create($validated);
+        $empresa = Empresa::create($validated);
 
-            return response()->json([
-                'success' => true,
-                'data' => $empresa
-            ], 201);
+        return response()->json([
+            'success' => true,
+            'data' => $empresa,
+        ], 201);                                                                                                        
+        }
 
-        } catch (\Illuminate\Validation\ValidationException $e) {
+
+    public function show(string $nit): JsonResponse
+    {
+        $empresa = Empresa::where('nit', $nit)->first();
+
+        if (!$empresa) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error de validación',
-                'errors' => $e->errors()
+                'message' => 'Empresa no encontrada',
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => $empresa,
+        ], 200);
+    }
+
+    public function update(Request $request, string $nit): JsonResponse
+    {
+        $empresa = Empresa::where('nit', $nit)->first();
+
+        if (!$empresa) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Empresa no encontrada',
+            ], 404);
+        }
+
+        $validated = $request->validate([
+            'nit'       => 'sometimes|required|unique:empresas,nit,' . $empresa->id,
+            'nombre'    => 'sometimes|required',
+            'direccion' => 'nullable',
+            'telefono'  => 'nullable',
+            'estado'    => 'in:Activo,Inactivo',
+        ]);
+
+
+        $empresa->update($validated);
+
+        return response()->json([
+            'success' => true,
+            'data' => $empresa,
+        ], 200);
+    }
+
+    // FRONTEND - Actualizar empresa desde el formulario
+    public function updateWeb(Request $request, $nit)
+    {
+        $empresa = Empresa::where('nit', $nit)->firstOrFail();
+
+        $validated = $request->validate([
+            'nombre' =>'required',
+            'direccion' =>'nullable',
+            'telefono' =>'nullable',
+            'estado' =>'in:Activo,Inactivo',
+    ]);
+
+        $empresa->update($validated);
+
+        return redirect()->route('empresas.indexWeb')
+                        ->with('success', 'Empresa actualizada correctamente');
+}
+
+    // Eliminar por NIT solo si está Inactiva (según tus tests)
+    public function destroy(string $nit): JsonResponse
+    {
+        $empresa = Empresa::where('nit', $nit)->first();
+
+        if (!$empresa) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Empresa no encontrada',
+            ], 404);
+        }
+
+        if ($empresa->estado !== 'Inactivo') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Solo se pueden eliminar empresas inactivas',
             ], 422);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error al crear la empresa',
-                'error' => $e->getMessage()
-            ], 500);
         }
+
+        $empresa->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Empresa eliminada correctamente',
+        ], 200);
     }
 
-    // GET /api/empresas/{nit} = consulta empresa por NIT
-    public function show($nit)
+    public function destroyInactivas(): JsonResponse
     {
-        try {
-            $empresa = Empresa::where('nit', $nit)->firstOrFail();
+        $deleted = Empresa::where('estado', 'Inactivo')->delete();
 
-            return response()->json([
-                'success' => true,
-                'data' => $empresa
-            ], 200);
-
-        } catch (ModelNotFoundException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Empresa no encontrada'
-            ], 404);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error al consultar la empresa',
-                'error' => $e->getMessage()
-            ], 500);
-        }
+        return response()->json([
+            'success' => true,
+            'deleted' => $deleted,
+        ], 200);
     }
 
-    // PUT/PATCH /api/empresas/{nit} = actualiza datos d e empresa
-    public function update(Request $request, $nit)
+    // ---------- WEB (Blade) ----------
+    public function indexWeb()
     {
-        try {
-            $empresa = Empresa::where('nit', $nit)->firstOrFail();
-
-            $validated = $request->validate([
-                'nombre' => 'sometimes|required|string|max:255',
-                'direccion' => 'nullable|string|max:255',
-                'telefono' => 'nullable|string|max:20',
-                'estado' => 'in:' . Empresa::ESTADO_ACTIVO . ',' . Empresa::ESTADO_INACTIVO,
-            ]);
-
-            $empresa->update($validated);
-
-            return response()->json([
-                'success' => true,
-                'data' => $empresa
-            ], 200);
-
-        } catch (ModelNotFoundException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Empresa no encontrada'
-            ], 404);
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error de validación',
-                'errors' => $e->errors()
-            ], 422);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error al actualizar la empresa',
-                'error' => $e->getMessage()
-            ], 500);
-        }
+        $empresas = Empresa::all();
+        return view('welcome', compact('empresas'));
     }
 
-    // DELETE /api/empresas/{nit} = elimina empresa solo si está inactiva
-    public function destroy($nit)
+    public function create()
     {
-        try {
-            $empresa = Empresa::where('nit', $nit)->firstOrFail();
-
-            if ($empresa->estado !== Empresa::ESTADO_INACTIVO) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Solo se pueden eliminar empresas inactivas'
-                ], 400);
-            }
-
-            $empresa->delete();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Empresa eliminada correctamente'
-            ], 200);
-
-        } catch (ModelNotFoundException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Empresa no encontrada'
-            ], 404);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error al eliminar la empresa',
-                'error' => $e->getMessage()
-            ], 500);
-        }
+        return view('empresas.create');
     }
 
-    // DELETE /api/empresas/inactivas = elimina todas las empresas inactivas
-    public function destroyInactivas()
+    public function edit(string $nit)
     {
-        try {
-            $deleted = Empresa::inactivas()->delete();
-
-            return response()->json([
-                'success' => true,
-                'message' => "$deleted empresas eliminadas"
-            ], 200);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error al eliminar empresas inactivas',
-                'error' => $e->getMessage()
-            ], 500);
-        }
+        $empresa = Empresa::where('nit', $nit)->firstOrFail();
+        return view('empresas.edit', compact('empresa'));
     }
 }

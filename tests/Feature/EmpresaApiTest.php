@@ -73,7 +73,7 @@ class EmpresaApiTest extends TestCase
         $response = $this->deleteJson('/api/empresas/000111222');
         $response->assertStatus(400);
 
-        // Cambiamos a inactiva
+        // Cambia a inactiva
         $empresa->update(['estado' => Empresa::ESTADO_INACTIVO]);
 
         $response = $this->deleteJson('/api/empresas/000111222');
